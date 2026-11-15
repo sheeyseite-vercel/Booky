@@ -1,0 +1,7 @@
+{
+  "appId": "com.booky.reader",
+  "appName": "Booky",
+  "webDir": "dist",
+  "server": { "androidScheme": "https" },
+  "plugins": { "CapacitorHttp": { "enabled": true } }
+}
