@@ -83,7 +83,7 @@ export default function Reader({ book, lib, back }) {
         {!pages && !err && <p className="center"><span className="spinner" /> Opening book…</p>}
         {err && <p className="center">{err}</p>}
         {pages && (
-          <div style={{ fontFamily: FONTS[prefs.font], fontSize: prefs.size, lineHeight: LH[prefs.lh] }}>
+          <div dir={/[\u0590-\u08FF]/.test((pages[page][0] || '').slice(0, 200)) ? 'rtl' : 'ltr'} style={{ fontFamily: FONTS[prefs.font], fontSize: prefs.size, lineHeight: LH[prefs.lh] }}>
             {page === 0 && (<><small className="kicker">{book.author}</small><h2 className="rh">{book.title}</h2></>)}
             {pages[page].map((p, i) => <p key={i}>{p}</p>)}
           </div>

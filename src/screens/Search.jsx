@@ -17,7 +17,7 @@ export default function Search({ preset, lib, openBook, openReader }) {
     const id = ++seq.current;
     setLoading(true); setErr('');
     try {
-      const r = await search(query.trim(), src);
+      const r = await search(query.trim(), src, (part) => { if (id === seq.current) setRes(part); });
       if (id === seq.current) setRes(r);
     } catch (e) { if (id === seq.current) { setErr(e.message); setRes([]); } }
     finally { if (id === seq.current) setLoading(false); }

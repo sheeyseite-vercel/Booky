@@ -70,15 +70,25 @@ export async function archive(q) {
 
 export const SOURCES = ['Gutenberg', 'Open Library', 'Internet Archive'];
 
-export async function search(q, source = 'All') {
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+
+// Calls onPartial(list) every time a source answers, so results show up fast.
+export async function search(q, source = 'All', onPartial = () => {}) {
   const jobs = { Gutenberg: gutenberg, 'Open Library': openLibrary, 'Internet Archive': archive };
   const names = source === 'All' ? SOURCES : [source];
-  const res = await Promise.allSettled(names.map((n) => jobs[n](q)));
-  const lists = res.map((r) => (r.status === 'fulfilled' ? r.value : []));
-  if (lists.every((l) => !l.length) && res.every((r) => r.status === 'rejected')) throw new Error('Could not reach the book sources');
-  const out = [];
-  for (let i = 0; out.length < 40 && lists.some((l) => i < l.length); i++) lists.forEach((l) => l[i] && out.push(l[i]));
-  return out;
+  const lists = names.map(() => []);
+  const merge = () => {
+    const out = [];
+    for (let i = 0; out.length < 40 && lists.some((l) => i < l.length); i++) lists.forEach((l) => l[i] && out.push(l[i]));
+    return out;
+  };
+  let fails = 0;
+  await Promise.all(names.map((n, k) => withTimeout(jobs[n](q), 12000).then(
+    (r) => { lists[k] = r; onPartial(merge()); },
+    () => { fails++; },
+  )));
+  if (fails === names.length) throw new Error('Could not reach the book sources — check your connection');
+  return merge();
 }
 
 export async function fetchRaw(book) {

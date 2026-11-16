@@ -6,6 +6,7 @@ export default function Detail({ book, lib, back, openReader }) {
   const busy = lib.busy[book.id];
   const [err, setErr] = useState('');
   const b = saved ? { ...book, ...saved } : book;
+  const canRead = !!(saved || b.readUrl);
   const stats = [
     [b.year || (b.downloads ? Intl.NumberFormat('en', { notation: 'compact' }).format(b.downloads) : '—'), b.year ? 'Published' : 'Downloads'],
     [(b.lang || 'en').toUpperCase(), 'Language'],
@@ -31,16 +32,16 @@ export default function Detail({ book, lib, back, openReader }) {
         ))}
       </div>
 
-      <div className="avail"><span>Available on</span><Badge source={b.source} />{saved && <Badge source="Imported" />}</div>
+      <div className="avail"><span>Available on</span><Badge source={b.source} />{saved && b.source !== 'Imported' && <Badge source="Imported" />}</div>
 
       {b.subjects?.length > 0 && (
         <p className="about">{b.subjects.map((s) => s.split(' -- ')[0]).filter((v, i, a) => a.indexOf(v) === i).slice(0, 4).join(' · ')}</p>
       )}
-      {!b.readUrl && <p className="about">This edition is only available to borrow online. Open the website to read it there.</p>}
+      {!canRead && <p className="about">This edition is only available to borrow online. Open the website to read it there.</p>}
       {err && <p className="about err">{err}</p>}
 
       <div className="actions">
-        <button className="btn primary" disabled={!b.readUrl} onClick={() => openReader(b)}>
+        <button className="btn primary" disabled={!canRead} onClick={() => openReader(b)}>
           <Icon n="book" s={20} /> {saved?.progress > 0 ? 'Continue' : 'Read now'}
         </button>
         {saved ? (
