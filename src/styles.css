@@ -181,6 +181,8 @@ input { font: inherit; color: inherit; }
 .reader .round.glass { background: rgba(255, 255, 255, 0.35); }
 .reader.dark .round.glass { background: rgba(255, 255, 255, 0.12); }
 .reader > * { position: relative; z-index: 1; }
+.reader > .rblob { position: absolute; z-index: 0; }
+.paper[dir='rtl'] p, .paper [dir='rtl'] p { text-align: right; letter-spacing: 0; word-spacing: 0; }
 .rtop { display: flex; align-items: center; justify-content: space-between; padding: 8px; border-radius: 28px; gap: 8px; }
 .rtitle { display: flex; flex-direction: column; align-items: center; min-width: 0; text-align: center; }
 .rtitle b { font-size: 14px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

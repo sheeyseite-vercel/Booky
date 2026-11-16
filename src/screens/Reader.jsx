@@ -63,6 +63,7 @@ export default function Reader({ book, lib, back }) {
   const set = (k, v) => setPrefs((p) => ({ ...p, [k]: v }));
   const [, bg, ink] = THEMES[prefs.theme];
   const dark = prefs.theme === 'night';
+  const rtl = !!pages && /[\u0590-\u08FF]/.test((pages[page][0] || '').slice(0, 200));
 
   return (
     <div className={'screen overlay reader' + (dark ? ' dark' : '')} data-theme={prefs.theme} style={{ '--ink': ink, '--rbg': bg }}>
@@ -83,8 +84,8 @@ export default function Reader({ book, lib, back }) {
         {!pages && !err && <p className="center"><span className="spinner" /> Opening book…</p>}
         {err && <p className="center">{err}</p>}
         {pages && (
-          <div dir={/[\u0590-\u08FF]/.test((pages[page][0] || '').slice(0, 200)) ? 'rtl' : 'ltr'} style={{ fontFamily: FONTS[prefs.font], fontSize: prefs.size, lineHeight: LH[prefs.lh] }}>
-            {page === 0 && (<><small className="kicker">{book.author}</small><h2 className="rh">{book.title}</h2></>)}
+          <div dir={rtl ? 'rtl' : 'ltr'} style={{ fontFamily: rtl ? "'Noto Naskh Arabic', 'Traditional Arabic', serif" : FONTS[prefs.font], fontSize: prefs.size, lineHeight: LH[prefs.lh] }}>
+            {page === 0 && (<><small className="kicker" style={rtl ? { letterSpacing: 0 } : undefined}>{book.author}</small><h2 className="rh">{book.title}</h2></>)}
             {pages[page].map((p, i) => <p key={i}>{p}</p>)}
           </div>
         )}

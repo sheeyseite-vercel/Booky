@@ -1,6 +1,6 @@
 // Tiny allow-listed proxy so the web version (Vercel) can read book sources
 // that do not send CORS headers. The Android app talks to the sources directly.
-const ALLOW = [/^gutendex\.com$/, /(^|\.)gutenberg\.org$/, /(^|\.)archive\.org$/, /(^|\.)openlibrary\.org$/];
+const ALLOW = [/^gutendex\.com$/, /(^|\.)gutenberg\.org$/, /(^|\.)archive\.org$/, /(^|\.)openlibrary\.org$/, /(^|\.)wikisource\.org$/];
 const ok = (u) => u.protocol === 'https:' && ALLOW.some((r) => r.test(u.hostname));
 
 export default async function handler(req, res) {

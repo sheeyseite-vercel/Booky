@@ -83,14 +83,22 @@ export async function parsePdf(buf, base) {
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i);
     const c = await page.getTextContent();
-    let line = '', out = '';
+    let line = '', out = '', px = null, py = null, pend = 0;
     for (const it of c.items) {
+      if (!it.str && !it.hasEOL) continue;
+      const x = it.transform[4], y = it.transform[5], h = Math.abs(it.transform[3]) || 10;
+      if (py !== null && Math.abs(y - py) > h * 0.6) { out += line + '\n'; line = ''; px = null; }
+      else if (px !== null) {
+        const gap = Math.min(Math.abs(x - pend), Math.abs(x + it.width - px));
+        if (gap > h * 0.18 && !/\s$/.test(line) && !/^\s/.test(it.str)) line += ' ';
+      }
       line += it.str;
-      if (it.hasEOL) { out += line + '\n'; line = ''; } else if (it.str && !it.str.endsWith(' ')) line += ' ';
+      px = x; pend = x + it.width; py = y;
+      if (it.hasEOL) { out += line + '\n'; line = ''; px = null; py = null; }
     }
     parts.push(out + line);
   }
-  const text = parts.join('\n\n').replace(/-\n(?=[a-z])/g, '').replace(/([^\n.!?:"”])\n(?=[^\n])/g, '$1 ');
+  const text = parts.join('\n\n').normalize('NFKC').replace(/-\n(?=[a-z])/g, '').replace(/([^\n.!?:"”])\n(?=[^\n])/g, '$1 ');
   if (text.trim().length < 50) throw new Error('This PDF is a scan (images only) — no text to read');
   return { title: base, author: 'Imported', text };
 }

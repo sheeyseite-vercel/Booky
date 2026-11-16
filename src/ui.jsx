@@ -50,7 +50,7 @@ export function Cover({ book, w = 104, h }) {
   );
 }
 
-export const SRC_COLOR = { Gutenberg: '#F59E0B', 'Open Library': '#38BDF8', 'Internet Archive': '#A78BFA', Imported: '#34D399' };
+export const SRC_COLOR = { Gutenberg: '#F59E0B', 'Open Library': '#38BDF8', 'Internet Archive': '#A78BFA', Wikisource: '#F472B6', Imported: '#34D399' };
 
 export function Badge({ source }) {
   return (

@@ -68,13 +68,39 @@ export async function archive(q) {
   }));
 }
 
-export const SOURCES = ['Gutenberg', 'Open Library', 'Internet Archive'];
+const strip = (h = '') => h.replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+
+async function wikisourceLang(q, lang) {
+  const base = `https://${lang}.wikisource.org/w/api.php`;
+  const url = `${base}?action=query&list=search&srsearch=${encodeURIComponent(q)}&srlimit=10&srnamespace=0&format=json`;
+  const d = await get(url, 'json');
+  return (d.query?.search || []).map((b) => ({
+    id: `w${lang}:${b.pageid}`,
+    source: 'Wikisource',
+    title: b.title,
+    author: lang === 'ar' ? 'ويكي مصدر' : 'Wikisource',
+    cover: null,
+    lang,
+    readUrl: `${base}?action=parse&page=${encodeURIComponent(b.title)}&prop=text&format=json&disablelimitreport=1&redirects=1`,
+    readKind: 'wikisource',
+    webUrl: `https://${lang}.wikisource.org/wiki/${encodeURIComponent(b.title)}`,
+    subjects: [strip(b.snippet).slice(0, 90)],
+  }));
+}
+
+export async function wikisource(q) {
+  const arabic = /[\u0600-\u06FF]/.test(q);
+  const rs = await Promise.allSettled(arabic ? [wikisourceLang(q, 'ar')] : [wikisourceLang(q, 'en'), wikisourceLang(q, 'ar')]);
+  return rs.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
+}
+
+export const SOURCES = ['Gutenberg', 'Open Library', 'Internet Archive', 'Wikisource'];
 
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 
 // Calls onPartial(list) every time a source answers, so results show up fast.
 export async function search(q, source = 'All', onPartial = () => {}) {
-  const jobs = { Gutenberg: gutenberg, 'Open Library': openLibrary, 'Internet Archive': archive };
+  const jobs = { Gutenberg: gutenberg, 'Open Library': openLibrary, 'Internet Archive': archive, Wikisource: wikisource };
   const names = source === 'All' ? SOURCES : [source];
   const lists = names.map(() => []);
   const merge = () => {
@@ -93,6 +119,10 @@ export async function search(q, source = 'All', onPartial = () => {}) {
 
 export async function fetchRaw(book) {
   if (!book.readUrl) throw new Error('This book is not available for free reading here');
+  if (book.readKind === 'wikisource') {
+    const d = await get(book.readUrl, 'json');
+    return htmlToText(d.parse?.text?.['*'] || '');
+  }
   const raw = await get(book.readUrl);
   return book.readKind === 'html' ? htmlToText(raw) : raw;
 }
