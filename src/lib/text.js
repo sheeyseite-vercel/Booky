@@ -68,8 +68,29 @@ export async function parseFile(file) {
   const ext = file.name.split('.').pop().toLowerCase();
   const base = file.name.replace(/\.[^.]+$/, '');
   if (ext === 'epub') return parseEpub(await file.arrayBuffer());
-  if (ext === 'pdf') throw new Error('PDF import is not supported yet — use EPUB, TXT or HTML');
+  if (ext === 'pdf') return parsePdf(await file.arrayBuffer(), base);
   const t = await file.text();
   if (['html', 'htm', 'xhtml'].includes(ext)) return { title: base, author: 'Imported', text: htmlToText(t) };
   return { title: base, author: 'Imported', text: t };
+}
+
+export async function parsePdf(buf, base) {
+  const pdfjs = await import('pdfjs-dist');
+  const worker = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
+  pdfjs.GlobalWorkerOptions.workerSrc = worker;
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(buf) }).promise;
+  const parts = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const c = await page.getTextContent();
+    let line = '', out = '';
+    for (const it of c.items) {
+      line += it.str;
+      if (it.hasEOL) { out += line + '\n'; line = ''; } else if (it.str && !it.str.endsWith(' ')) line += ' ';
+    }
+    parts.push(out + line);
+  }
+  const text = parts.join('\n\n').replace(/-\n(?=[a-z])/g, '').replace(/([^\n.!?:"”])\n(?=[^\n])/g, '$1 ');
+  if (text.trim().length < 50) throw new Error('This PDF is a scan (images only) — no text to read');
+  return { title: base, author: 'Imported', text };
 }

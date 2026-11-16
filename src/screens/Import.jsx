@@ -20,7 +20,7 @@ export default function Import({ lib, openBook }) {
   const onFiles = (files) => [...files].forEach((f) => finish(f.name, () => parseFile(f)));
 
   const fromLink = () => {
-    const url = window.prompt('Paste a link to an EPUB, TXT or HTML file');
+    const url = window.prompt('Paste a link to an EPUB, PDF, TXT or HTML file');
     if (!url) return;
     finish(url, async () => {
       const name = decodeURIComponent(url.split('/').pop().split('?')[0] || 'Imported');
@@ -32,7 +32,7 @@ export default function Import({ lib, openBook }) {
   };
 
   const tiles = [
-    ['folder', 'From device', 'EPUB, TXT, HTML', () => file.current.click(), 'a'],
+    ['folder', 'From device', 'EPUB, PDF, TXT, HTML', () => file.current.click(), 'a'],
     ['link', 'Paste a link', 'Direct file URL', fromLink, 'b'],
     ['cloud', 'Cloud drives', 'Via file picker', () => file.current.click(), 'c'],
     ['scan', 'Scan a book', 'Coming soon', null, 'd'],
@@ -42,13 +42,13 @@ export default function Import({ lib, openBook }) {
   return (
     <div className="screen">
       <header className="pagehead"><div><h1>Import</h1><small>Bring books from anywhere</small></div></header>
-      <input ref={file} type="file" hidden multiple accept=".epub,.txt,.html,.htm,.xhtml,text/plain,text/html,application/epub+zip" onChange={(e) => { onFiles(e.target.files); e.target.value = ''; }} />
+      <input ref={file} type="file" hidden multiple accept=".epub,.pdf,.txt,.html,.htm,.xhtml,text/plain,text/html,application/epub+zip,application/pdf" onChange={(e) => { onFiles(e.target.files); e.target.value = ''; }} />
 
       <div className={'dropzone glass' + (drag ? ' drag' : '')} onClick={() => file.current.click()}
         onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)}
         onDrop={(e) => { e.preventDefault(); setDrag(false); onFiles(e.dataTransfer.files); }}>
         <div className="upicon"><Icon n="import" s={28} w={2} /></div>
-        <b>Drop EPUB, TXT or HTML</b>
+        <b>Drop EPUB, PDF, TXT or HTML</b>
         <span>or tap to browse your files</span>
       </div>
 
