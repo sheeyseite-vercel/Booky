@@ -39,9 +39,18 @@ export function useLibrary() {
     }
   };
 
+  const importPdf = async (meta, buf, pages) => {
+    await idbSet('pdf:' + meta.id, buf);
+    const cur = (await idbGet(KEY)) || [];
+    const entry = { source: 'Imported', cover: null, ...meta, kind: 'pdf', pages, added: Date.now(), progress: 0, size: buf.byteLength };
+    await persist([entry, ...cur.filter((b) => b.id !== meta.id)]);
+  };
+
+  const getPdf = (id) => idbGet('pdf:' + id);
+
   const importText = (meta, text) => saveText({ source: 'Imported', cover: null, ...meta }, text);
 
-  const remove = async (id) => { await idbDel('text:' + id); await persist(items.filter((b) => b.id !== id)); };
+  const remove = async (id) => { await idbDel('text:' + id); await idbDel('pdf:' + id); await persist(items.filter((b) => b.id !== id)); };
 
   const getParas = (id) => idbGet('text:' + id);
 
@@ -50,5 +59,5 @@ export function useLibrary() {
     persist(next);
   };
 
-  return { items, busy, ready, has, find, download, importText, remove, getParas, setProgress };
+  return { items, busy, ready, has, find, download, importText, importPdf, getPdf, remove, getParas, setProgress };
 }

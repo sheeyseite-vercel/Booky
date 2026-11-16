@@ -117,14 +117,30 @@ export async function search(q, source = 'All', onPartial = () => {}) {
   return merge();
 }
 
+const MIN = 400;
+
+async function iaFallback(book) {
+  const id = book.id.slice(1);
+  const m = await get(`https://archive.org/metadata/${id}`, 'json');
+  const files = m.files || [];
+  const f = files.find((x) => x.format === 'DjVuTXT') || files.find((x) => /\.txt$/i.test(x.name) && !/_meta|_files/.test(x.name));
+  if (!f) throw new Error('This edition has no readable text (scan only). Try another edition.');
+  return get(`https://archive.org/download/${id}/${encodeURIComponent(f.name)}`);
+}
+
 export async function fetchRaw(book) {
   if (!book.readUrl) throw new Error('This book is not available for free reading here');
+  let raw = '';
   if (book.readKind === 'wikisource') {
     const d = await get(book.readUrl, 'json');
     const doc = new DOMParser().parseFromString(d.parse?.text?.['*'] || '', 'text/html');
     doc.querySelectorAll('.ws-noexport, .noprint, .mw-editsection, #headerContainer, .header_notes, .prp-pages-output, .wst-header, table, style, script, sup.reference, .navbox, .ws-header').forEach((e) => e.remove());
-    return htmlToText(doc.body.innerHTML);
+    raw = htmlToText(doc.body.innerHTML);
+  } else {
+    try { raw = await get(book.readUrl); } catch (e) { if (!/^[ao]/.test(book.id)) throw e; }
+    if (book.readKind === 'html') raw = htmlToText(raw);
+    if ((raw || '').trim().length < MIN && /^[ao]/.test(book.id) && book.readUrl.includes('archive.org')) raw = await iaFallback({ ...book, id: 'a' + book.readUrl.split('/download/')[1].split('/')[0] });
   }
-  const raw = await get(book.readUrl);
-  return book.readKind === 'html' ? htmlToText(raw) : raw;
+  if ((raw || '').trim().length < MIN) throw new Error('This edition has no readable text. Try another edition.');
+  return raw;
 }

@@ -74,12 +74,22 @@ export async function parseFile(file) {
   return { title: base, author: 'Imported', text: t };
 }
 
-export async function parsePdf(buf, base) {
+async function pdfLib() {
   const pdfjs = await import('pdfjs-dist');
   const worker = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
   pdfjs.GlobalWorkerOptions.workerSrc = worker;
-  const doc = await pdfjs.getDocument({ data: new Uint8Array(buf) }).promise;
-  const parts = [];
+  return pdfjs;
+}
+
+export async function openPdf(buf) {
+  const pdfjs = await pdfLib();
+  return pdfjs.getDocument({ data: new Uint8Array(buf.slice(0)) }).promise;
+}
+
+// Returns {title, author, text} for text PDFs, or {title, author, pdf, pages} for scanned ones.
+export async function parsePdf(buf, base) {
+  const doc = await openPdf(buf);
+  const pageLines = [];
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i);
     const c = await page.getTextContent();
@@ -96,9 +106,18 @@ export async function parsePdf(buf, base) {
       px = x; pend = x + it.width; py = y;
       if (it.hasEOL) { out += line + '\n'; line = ''; px = null; py = null; }
     }
-    parts.push(out + line);
+    pageLines.push((out + line).normalize('NFKC').split('\n').map((l) => l.trim()).filter(Boolean));
   }
-  const text = parts.join('\n\n').normalize('NFKC').replace(/-\n(?=[a-z])/g, '').replace(/([^\n.!?:"”])\n(?=[^\n])/g, '$1 ');
-  if (text.trim().length < 50) throw new Error('This PDF is a scan (images only) — no text to read');
+  // drop watermarks / running headers: lines repeated on many pages
+  const n = pageLines.length;
+  if (n >= 3) {
+    const freq = new Map();
+    pageLines.forEach((ls) => new Set(ls).forEach((l) => freq.set(l, (freq.get(l) || 0) + 1)));
+    const lim = Math.max(3, n * 0.3);
+    pageLines.forEach((ls, k) => { pageLines[k] = ls.filter((l) => (freq.get(l) || 0) < lim); });
+  }
+  const chars = pageLines.reduce((a, ls) => a + ls.join('').length, 0);
+  if (chars / Math.max(1, n) < 120) return { title: base, author: 'Imported', pdf: buf, pages: n };
+  const text = pageLines.map((ls) => ls.join('\n')).join('\n\n').replace(/-\n(?=[a-z])/g, '').replace(/([^\n.!?:"\u201d\u061f])\n(?=[^\n])/g, '$1 ');
   return { title: base, author: 'Imported', text };
 }

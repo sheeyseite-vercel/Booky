@@ -229,3 +229,14 @@ input[type='range']::-moz-range-thumb { width: 22px; height: 22px; border-radius
 
 .paper .chap { margin: 1.1em 0 0.6em; font-size: 1.25em; line-height: 1.25; font-weight: 700; letter-spacing: 0.01em; }
 .paper .chap::before { content: ''; display: block; width: 28px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, #8b7bff, #ff72c6); margin-bottom: 10px; }
+
+.paper { user-select: text; -webkit-user-select: text; }
+.paper.pdfmode { padding: 8px; }
+.pdfpage { display: block; border-radius: 16px; background: #fff; }
+mark.hl { background: rgba(250, 204, 21, 0.55); color: inherit; border-radius: 3px; padding: 0 1px; }
+mark.hl.hasnote { border-bottom: 2px solid #ec4899; }
+.reader.dark mark.hl { background: rgba(250, 204, 21, 0.35); }
+.selbar { position: fixed !important; transform: translateX(-50%); z-index: 40 !important; display: flex; flex-wrap: wrap; justify-content: center; gap: 0; padding: 4px; border-radius: 20px; background: rgba(34, 24, 52, 0.94); color: #fff; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); max-width: 300px; }
+.selbar button { padding: 9px 14px; font-size: 13px; font-weight: 700; color: #fff; text-align: center; }
+.selbar button + button { border-left: 1px solid rgba(255, 255, 255, 0.18); }
+.notetip { width: 100%; padding: 6px 12px 8px; font-size: 12px; opacity: 0.85; border-top: 1px solid rgba(255, 255, 255, 0.15); }

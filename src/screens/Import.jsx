@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { get } from '../lib/http';
-import { htmlToText, parseEpub, parseFile } from '../lib/text';
+import { htmlToText, parseEpub, parseFile, parsePdf } from '../lib/text';
 import { Cover, Icon, Progress, SectionHeader } from '../ui';
 
 export default function Import({ lib, openBook }) {
@@ -11,8 +11,11 @@ export default function Import({ lib, openBook }) {
   const finish = async (name, job) => {
     setStatus({ name, state: 'busy' });
     try {
-      const { title, author, text } = await job();
-      await lib.importText({ id: 'i' + Date.now(), title, author }, text);
+      const r = await job();
+      const meta = { id: 'i' + Date.now(), title: r.title, author: r.author };
+      if (r.pdf) await lib.importPdf(meta, r.pdf, r.pages);
+      else await lib.importText(meta, r.text);
+      const title = r.title;
       setStatus({ name: title, state: 'ok', msg: 'Imported to your library' });
     } catch (e) { setStatus({ name, state: 'err', msg: e.message }); }
   };
@@ -25,6 +28,7 @@ export default function Import({ lib, openBook }) {
     finish(url, async () => {
       const name = decodeURIComponent(url.split('/').pop().split('?')[0] || 'Imported');
       if (/\.epub(\?|$)/i.test(url)) return { ...(await parseEpub(await get(url, 'buffer'))) };
+      if (/\.pdf(\?|$)/i.test(url)) return parsePdf(await get(url, 'buffer'), name.replace(/\.[^.]+$/, '') || 'Imported');
       const raw = await get(url);
       const isHtml = /\.html?(\?|$)/i.test(url) || /^\s*<(!doctype|html)/i.test(raw);
       return { title: name.replace(/\.[^.]+$/, '') || 'Imported', author: 'Imported', text: isHtml ? htmlToText(raw) : raw };
