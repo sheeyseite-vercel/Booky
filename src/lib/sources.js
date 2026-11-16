@@ -101,7 +101,7 @@ const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeo
 // Calls onPartial(list) every time a source answers, so results show up fast.
 export async function search(q, source = 'All', onPartial = () => {}) {
   const jobs = { Gutenberg: gutenberg, 'Open Library': openLibrary, 'Internet Archive': archive, Wikisource: wikisource };
-  const names = source === 'All' ? SOURCES : [source];
+  const names = source === 'All' ? SOURCES.filter((n) => n !== 'Wikisource') : [source];
   const lists = names.map(() => []);
   const merge = () => {
     const out = [];
@@ -121,7 +121,9 @@ export async function fetchRaw(book) {
   if (!book.readUrl) throw new Error('This book is not available for free reading here');
   if (book.readKind === 'wikisource') {
     const d = await get(book.readUrl, 'json');
-    return htmlToText(d.parse?.text?.['*'] || '');
+    const doc = new DOMParser().parseFromString(d.parse?.text?.['*'] || '', 'text/html');
+    doc.querySelectorAll('.ws-noexport, .noprint, .mw-editsection, #headerContainer, .header_notes, .prp-pages-output, .wst-header, table, style, script, sup.reference, .navbox, .ws-header').forEach((e) => e.remove());
+    return htmlToText(doc.body.innerHTML);
   }
   const raw = await get(book.readUrl);
   return book.readKind === 'html' ? htmlToText(raw) : raw;

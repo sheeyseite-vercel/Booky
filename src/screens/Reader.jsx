@@ -12,6 +12,9 @@ const THEMES = {
 const FONTS = { Lora: "'Lora', serif", Fraunces: "'Fraunces Variable', serif", Manrope: "'Manrope Variable', sans-serif" };
 const LH = { Compact: 1.45, Normal: 1.65, Relaxed: 1.9 };
 
+const HEAD = /^(chapter|part|book|section|volume|epilogue|prologue|الفصل|الباب|الجزء|المقدمة)\b.{0,70}$/i;
+const isHead = (p) => p.length < 80 && (HEAD.test(p.trim()) || /^[IVXLC]+\.?$/.test(p.trim()));
+
 const loadPrefs = () => {
   try { return { theme: 'paper', size: 17, font: 'Lora', lh: 'Normal', ...JSON.parse(localStorage.getItem('booky:prefs') || '{}') }; }
   catch { return { theme: 'paper', size: 17, font: 'Lora', lh: 'Normal' }; }
@@ -86,7 +89,7 @@ export default function Reader({ book, lib, back }) {
         {pages && (
           <div dir={rtl ? 'rtl' : 'ltr'} style={{ fontFamily: rtl ? "'Noto Naskh Arabic', 'Traditional Arabic', serif" : FONTS[prefs.font], fontSize: prefs.size, lineHeight: LH[prefs.lh] }}>
             {page === 0 && (<><small className="kicker" style={rtl ? { letterSpacing: 0 } : undefined}>{book.author}</small><h2 className="rh">{book.title}</h2></>)}
-            {pages[page].map((p, i) => <p key={i}>{p}</p>)}
+            {pages[page].map((p, i) => (isHead(p) ? <h3 key={i} className="chap">{p.trim()}</h3> : <p key={i}>{p}</p>))}
           </div>
         )}
       </div>

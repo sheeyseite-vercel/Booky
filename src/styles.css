@@ -226,3 +226,6 @@ input[type='range']::-moz-range-thumb { width: 22px; height: 22px; border-radius
 .seg button.on { background: var(--brand); color: #fff; opacity: 1; box-shadow: var(--glow); font-weight: 700; }
 
 @media (min-width: 481px) { .app { border-radius: 36px; margin-top: calc((100dvh - min(100dvh, 900px)) / 2); height: min(100dvh, 900px); } }
+
+.paper .chap { margin: 1.1em 0 0.6em; font-size: 1.25em; line-height: 1.25; font-weight: 700; letter-spacing: 0.01em; }
+.paper .chap::before { content: ''; display: block; width: 28px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, #8b7bff, #ff72c6); margin-bottom: 10px; }
